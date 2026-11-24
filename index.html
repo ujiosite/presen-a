@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Presença no Laboratório — Nuvem & Relatórios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eceff3;--surface:#ffffff;--surface-2:#f6f8fa;--ink:#16212b;--muted:#5d6b78;
+  --line:#d8dee5;--accent:#2b4bd8;--accent-soft:#e8edff;--accent-ink:#ffffff;
+  --free:#1d9a5f;--free-bg:#e3f5ec;--busy:#d2433b;--busy-bg:#fbe7e5;
+  --warn:#b45309;--warn-bg:#fef3c7;--r:14px;--shadow:0 2px 10px rgba(22,33,43,.05);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10161c;--surface:#18212a;--surface-2:#1f2a35;--ink:#e8eef3;--muted:#92a1ae;
+    --line:#2b3844;--accent:#7b93ff;--accent-soft:#1e2747;--accent-ink:#0f1630;
+    --free:#4cc58a;--free-bg:#163626;--busy:#ff7f76;--busy-bg:#3e1e1c;
+    --warn:#fbbf24;--warn-bg:#3b2b10;--shadow:0 2px 12px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10161c;--surface:#18212a;--surface-2:#1f2a35;--ink:#e8eef3;--muted:#92a1ae;
+  --line:#2b3844;--accent:#7b93ff;--accent-soft:#1e2747;--accent-ink:#0f1630;
+  --free:#4cc58a;--free-bg:#163626;--busy:#ff7f76;--busy-bg:#3e1e1c;
+  --warn:#fbbf24;--warn-bg:#3b2b10;--shadow:0 2px 12px rgba(0,0,0,.25);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.5 "Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 56px;display:grid;gap:18px}
+
+/* Cabeçalho e navegação */
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.brand h1{margin:0;font-size:clamp(1.5rem,3.6vw,2.15rem);font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.sub{color:var(--muted);margin:4px 0 0;font-size:.92rem;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.shield{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--warn-bg);color:var(--warn);cursor:pointer;border:none}
+.shield.online{background:var(--free-bg);color:var(--free)}
+.shield.syncing{background:var(--accent-soft);color:var(--accent)}
+.shield.err{background:var(--busy-bg);color:var(--busy)}
+.head-right{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.count{font-weight:800;font-size:.98rem;background:var(--surface);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+
+.tabs{display:flex;flex-wrap:wrap;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:6px;box-shadow:var(--shadow)}
+.tab{flex:1;min-width:140px;border:none;background:transparent;color:var(--muted);font-weight:700;border-radius:10px;padding:10px 14px;min-height:42px;cursor:pointer;transition:.15s}
+.tab:hover{color:var(--ink);background:var(--surface-2)}
+.tab.active{background:var(--accent);color:var(--accent-ink)}
+.view[hidden]{display:none}
+
+/* Cards e formulários */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.card-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+h2{margin:0;font-size:1.08rem;font-weight:700}
+h3{margin:0 0 10px;font-size:.95rem;font-weight:700;color:var(--muted)}
+label{display:grid;gap:5px;font-size:.83rem;color:var(--muted);font-weight:600}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;min-height:42px;width:100%}
+input[readonly]{opacity:.78;cursor:default;font-weight:800}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.form{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end}
+.s2{grid-column:span 2}
+.sala{display:grid;grid-template-columns:1fr 72px;gap:8px}
+#tur{text-align:center;text-transform:uppercase;font-weight:800}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}
+
+button{font:inherit;font-weight:600;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);padding:9px 15px;min-height:42px;cursor:pointer;transition:opacity .15s,transform .05s}
+button:active{transform:translateY(1px)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.success{background:var(--free);color:#fff;border-color:var(--free)}
+button.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
+button.danger{color:var(--busy);border-color:var(--busy);background:transparent}
+button.sm{min-height:34px;padding:4px 10px;font-size:.82rem}
+button.icon-btn{min-height:40px;padding:6px 12px;font-size:.88rem}
+
+.msg{min-height:1.4em;margin:10px 0 0;font-size:.9rem;font-weight:600}
+.msg.err{color:var(--busy)}
+.msg.ok{color:var(--free)}
+
+/* Máquinas */
+.machines{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.m{border-radius:12px;padding:12px;border:2px solid;display:grid;gap:6px;min-height:106px;align-content:space-between;transition:transform .12s}
+.m.free:hover{transform:translateY(-2px)}
+.m .top{display:flex;justify-content:space-between;align-items:baseline}
+.m .n{font-size:1.85rem;font-weight:800;line-height:1}
+.m .time{font-size:.78rem;font-weight:700;opacity:.85}
+.m .who{font-size:.86rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m .sala-m{font-size:.78rem;opacity:.85}
+.m.free{background:var(--free-bg);border-color:var(--free);color:var(--free);cursor:pointer}
+.m.busy{background:var(--busy-bg);border-color:var(--busy);color:var(--busy)}
+.m.sel{outline:3px solid var(--accent);outline-offset:2px}
+.m .st{font-size:.82rem;font-weight:700}
+.m button{min-height:30px;padding:3px 8px;font-size:.78rem;color:var(--busy);border-color:var(--busy);background:var(--surface)}
+
+/* Filtros e tabela */
+.filters{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:end;margin-bottom:12px}
+.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:780px}
+th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--line);font-size:.9rem}
+th{font-size:.8rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:700}
+tr.archived{opacity:.62;background:var(--surface-2)}
+tr.archived td:nth-child(4){text-decoration:line-through}
+td.btns{white-space:nowrap;text-align:right}
+td.btns button{margin-left:5px}
+.tag{display:inline-block;min-width:2rem;text-align:center;border-radius:8px;padding:2px 8px;font-weight:800;font-size:.82rem;background:var(--bg)}
+.tag.on{background:var(--busy-bg);color:var(--busy)}
+.tag.done{background:var(--free-bg);color:var(--free)}
+.tag.arch{background:var(--warn-bg);color:var(--warn)}
+.empty{color:var(--muted);padding:26px 0;text-align:center;font-size:.95rem}
+
+/* Relatório Mensal */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+.kpi{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi .k-lbl{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.kpi .k-val{font-size:1.75rem;font-weight:800;line-height:1.15;margin-top:4px;color:var(--ink)}
+.kpi .k-sub{font-size:.8rem;color:var(--muted);margin-top:4px}
+
+.rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.bar-list{display:grid;gap:10px}
+.bar-row{display:grid;gap:4px}
+.bar-meta{display:flex;justify-content:space-between;font-size:.86rem;font-weight:600}
+.bar-track{height:10px;background:var(--bg);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .25s}
+.bar-fill.green{background:var(--free)}
+
+/* Backup & Nuvem */
+.info-box{background:var(--accent-soft);border:1px solid var(--accent);border-radius:12px;padding:14px;font-size:.9rem;line-height:1.5;margin-bottom:16px}
+.stats-inline{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.cloud-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-bottom:12px}
+
+dialog{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink);max-width:420px;width:92%;padding:20px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+
+@media (max-width:900px){
+  .filters{grid-template-columns:repeat(2,1fr)}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .rep-grid{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .form{grid-template-columns:1fr 1fr}
+  .machines{grid-template-columns:repeat(2,1fr)}
+  .stats-inline,.cloud-row{grid-template-columns:1fr}
+}
+@media (max-width:460px){
+  .form,.filters,.kpis{grid-template-columns:1fr}
+  .s2{grid-column:auto}
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand">
+      <h1>Presença no laboratório</h1>
+      <p class="sub">
+        <span id="hoje"></span>
+        <button type="button" class="shield" id="cloudBadge" title="Clique para sincronizar ou configurar a nuvem">● Modo Local (clique para configurar nuvem)</button>
+      </p>
+    </div>
+    <div class="head-right">
+      <div class="count" id="total">0 em uso</div>
+      <button type="button" class="icon-btn" id="themeBtn" title="Alternar tema claro/escuro">Alternar tema</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Navegação principal">
+    <button type="button" class="tab active" data-tab="presenca" role="tab" aria-selected="true">Presença &amp; Máquinas</button>
+    <button type="button" class="tab" data-tab="relatorio" role="tab" aria-selected="false">Relatório Mensal</button>
+    <button type="button" class="tab" data-tab="backup" role="tab" aria-selected="false">Nuvem &amp; Backup</button>
+  </nav>
+
+  <!-- ==================== ABA 1: PRESENÇA & MÁQUINAS ==================== -->
+  <div id="view-presenca" class="view">
+    <div style="display:grid;gap:18px">
+      <section class="card" aria-label="Registro rápido">
+        <div class="card-head">
+          <h2 id="formTitle">Registrar entrada no laboratório</h2>
+        </div>
+        <form id="f" autocomplete="off">
+          <div class="form">
+            <label class="s2">Nome do aluno
+              <input id="nome" list="alunosList" required maxlength="80" placeholder="Nome completo (autocompleta alunos já cadastrados)">
+            </label>
+            <label>Período
+              <select id="per">
+                <option value="Manhã">Manhã (5º ao 9º)</option>
+                <option value="Tarde">Tarde (1º ao 5º)</option>
+              </select>
+            </label>
+            <label>Sala / turma
+              <span class="sala">
+                <select id="ano" aria-label="Ano"></select>
+                <input id="tur" maxlength="1" placeholder="A–C" aria-label="Turma (A a C)" autocapitalize="characters">
+              </span>
+            </label>
+            <label class="s2">Professor que liberou
+              <input id="prof" list="profs" required maxlength="80" placeholder="Nome do professor">
+            </label>
+            <label>Máquina
+              <select id="maq"></select>
+            </label>
+            <label>Horário (automático)
+              <input id="hora" readonly tabindex="-1">
+            </label>
+          </div>
+          <datalist id="alunosList"></datalist>
+          <datalist id="profs"></datalist>
+          <div class="actions">
+            <button class="primary" id="ok" type="submit">Registrar presença</button>
+            <button type="button" id="cancela" hidden>Cancelar edição</button>
+          </div>
+          <p class="msg" id="msg" role="alert"></p>
+        </form>
+      </section>
+
+      <section class="card" aria-label="Status das máquinas">
+        <div class="card-head">
+          <h2>Máquinas (1 a 8)</h2>
+          <button type="button" class="sm warn" id="liberarTodas">Liberar todas em uso (encerrar turno)</button>
+        </div>
+        <div class="machines" id="maqs"></div>
+      </section>
+
+      <section class="card" aria-label="Lista de presença">
+        <div class="card-head">
+          <h2>Histórico de presenças</h2>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:.84rem">
+            <input type="checkbox" id="verArquivados" style="width:auto;min-height:auto">
+            Mostrar registros arquivados
+          </label>
+        </div>
+        <div class="filters">
+          <label>Buscar aluno / prof.<input type="search" id="fbusca" placeholder="Digite um nome..."></label>
+          <label>Filtrar por sala<select id="fsala"></select></label>
+          <label>Filtrar por período
+            <select id="fper">
+              <option value="">Todos os períodos</option>
+              <option value="Manhã">Manhã</option>
+              <option value="Tarde">Tarde</option>
+            </select>
+          </label>
+          <label>Filtrar por data<input type="date" id="fdata"></label>
+          <button type="button" id="todas">Ver todas as datas</button>
+        </div>
+        <div class="actions" style="margin:0 0 14px">
+          <button type="button" class="primary" id="pdf">Baixar lista filtrada (PDF)</button>
+          <button type="button" id="csvDia">Exportar lista filtrada (Excel/CSV)</button>
+        </div>
+        <div class="wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Entrada / Saída</th>
+                <th>Período</th>
+                <th>Nome do aluno</th>
+                <th>Sala</th>
+                <th>Máquina</th>
+                <th>Professor</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="vazio" hidden>Nenhum registro neste filtro. Use o formulário acima para registrar a primeira presença.</div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ==================== ABA 2: RELATÓRIO MENSAL ==================== -->
+  <div id="view-relatorio" class="view" hidden>
+    <div style="display:grid;gap:18px">
+      <section class="card">
+        <div class="card-head">
+          <h2>Relatório Mensal do Laboratório</h2>
+        </div>
+        <div class="filters" style="grid-template-columns:repeat(3,1fr)">
+          <label>Mês de referência
+            <input type="month" id="rmes">
+          </label>
+          <label>Filtrar por período
+            <select id="rper">
+              <option value="">Todos os períodos (Manhã e Tarde)</option>
+              <option value="Manhã">Somente Manhã</option>
+              <option value="Tarde">Somente Tarde</option>
+            </select>
+          </label>
+          <label>Filtrar por sala
+            <select id="rsala"></select>
+          </label>
+        </div>
+        <div class="actions" style="margin-top:4px">
+          <button type="button" class="primary" id="pdfMensal">Baixar Relatório Mensal Completo (PDF)</button>
+          <button type="button" class="success" id="csvMensal">Exportar Dados do Mês (Excel / CSV)</button>
+        </div>
+        <p class="msg" id="rmsg" role="alert"></p>
+
+        <div class="kpis" id="rkpis">
+          <div class="kpi"><div class="k-lbl">Total de presenças</div><div class="k-val" id="kTotal">0</div><div class="k-sub" id="kSplit">Manhã: 0 · Tarde: 0</div></div>
+          <div class="kpi"><div class="k-lbl">Alunos únicos</div><div class="k-val" id="kUnicos">0</div><div class="k-sub" id="kSalas">0 salas atendidas</div></div>
+          <div class="kpi"><div class="k-lbl">Dias com uso</div><div class="k-val" id="kDias">0</div><div class="k-sub" id="kMedia">Média: 0 / dia</div></div>
+          <div class="kpi"><div class="k-lbl">Tempo médio</div><div class="k-val" id="kTempo">–</div><div class="k-sub" id="kProfs">0 professores</div></div>
+        </div>
+      </section>
+
+      <div class="rep-grid">
+        <section class="card">
+          <h3>Atendimentos por Sala / Turma</h3>
+          <div id="rPorSala" class="bar-list"></div>
+        </section>
+        <section class="card">
+          <h3>Liberações por Professor</h3>
+          <div id="rPorProf" class="bar-list"></div>
+        </section>
+      </div>
+
+      <div class="rep-grid">
+        <section class="card">
+          <h3>Uso por Máquina (1 a 8)</h3>
+          <div id="rPorMaq" class="bar-list"></div>
+        </section>
+        <section class="card">
+          <h3>Alunos mais frequentes no mês</h3>
+          <div id="rTopAlunos" class="bar-list"></div>
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Resumo Dia a Dia do Mês</h2>
+        </div>
+        <div class="wrap">
+          <table style="min-width:520px">
+            <thead>
+              <tr><th>Data</th><th>Manhã</th><th>Tarde</th><th>Total do dia</th><th>Salas atendidas</th></tr>
+            </thead>
+            <tbody id="rDiaRows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="rVazio" hidden>Nenhum registro encontrado para o mês e filtros selecionados.</div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ==================== ABA 3: NUVEM & BACKUP ==================== -->
+  <div id="view-backup" class="view" hidden>
+    <div style="display:grid;gap:18px">
+      <section class="card">
+        <div class="card-head">
+          <h2>Sincronização em Nuvem (Google Sheets)</h2>
+        </div>
+        <div class="info-box">
+          Conecte este aplicativo à sua Planilha do Google para que todos os registros fiquem salvos permanentemente na nuvem, funcionando em qualquer navegador ou computador.
+        </div>
+        <div class="cloud-row">
+          <label>Link do Web App (Google Apps Script)
+            <input type="url" id="cloudUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+          </label>
+          <button type="button" class="primary" id="saveCloudUrl">Salvar e Conectar</button>
+        </div>
+        <div class="actions" style="margin-top:6px">
+          <button type="button" class="success" id="syncNowBtn">Sincronizar agora</button>
+          <button type="button" id="pushAllBtn">Enviar todo histórico local para a nuvem</button>
+        </div>
+        <p class="msg" id="cmsg" role="alert"></p>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h2>Backup Local &amp; Portátil (.json)</h2>
+        </div>
+        <div class="stats-inline">
+          <div class="kpi"><div class="k-lbl">Total histórico salvo</div><div class="k-val" id="bTotal">0</div><div class="k-sub" id="bArch">0 arquivados</div></div>
+          <div class="kpi"><div class="k-lbl">Status da Nuvem</div><div class="k-val" id="bCloud" style="font-size:1.15rem">Não conectada</div><div class="k-sub" id="bLastSync">Nunca sincronizado</div></div>
+          <div class="kpi"><div class="k-lbl">Último backup manual</div><div class="k-val" id="bLast" style="font-size:1.15rem">Nunca feito</div><div class="k-sub">Cópia de segurança em arquivo</div></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="primary" id="exportJson">Baixar Backup Completo (.json)</button>
+          <button type="button" id="importJsonBtn">Importar / Mesclar Backup (.json)</button>
+          <input type="file" id="importJsonFile" accept="application/json,.json" hidden>
+        </div>
+        <p class="msg" id="bmsg" role="alert"></p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <p id="dtxt" style="margin-top:0"></p>
+  <div class="actions" style="justify-content:flex-end">
+    <button type="button" id="dno">Cancelar</button>
+    <button type="button" class="primary" id="dyes">Confirmar</button>
+  </div>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* =========================================================================
+   OPCIONAL: Se quiser deixar o link fixo no arquivo HTML para abrir em
+   qualquer computador sem precisar colar novamente, cole a URL entre as aspas:
+   ========================================================================= */
+var DEFAULT_CLOUD_URL = "https://script.google.com/macros/s/AKfycbwrifTg96rDfT6Dms_wf9xcWvhQl0s2-8ybIEcNTwnfrb4kBL_KosZcev0CRtZc086R/exec";
+
+var KEY="labPresenca.db", OLD="labPresenca.v1", META_KEY="labPresenca.meta", THEME_KEY="labPresenca.theme";
+var IDB_NAME="LabPresencaDB", IDB_STORE="kv", IDB_KEY="main_db";
+var FAIXA={"Manhã":[5,9],"Tarde":[1,5]};
+var MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+
+var $=function(id){return document.getElementById(id)};
+var editId=null, selMaq="", acao=null;
+
+/* ===== Tema ===== */
+function applyTheme(t){
+  if(t==="dark"||t==="light") document.documentElement.setAttribute("data-theme",t);
+  else document.documentElement.removeAttribute("data-theme");
+}
+applyTheme(localStorage.getItem(THEME_KEY));
+$("themeBtn").onclick=function(){
+  var cur=document.documentElement.getAttribute("data-theme");
+  var prefersDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;
+  var next=(cur==="dark"||(!cur&&prefersDark))?"light":"dark";
+  applyTheme(next);
+  try{localStorage.setItem(THEME_KEY,next)}catch(e){}
+};
+
+/* ===== Utilitários ===== */
+function pad(n){return String(n).padStart(2,"0")}
+function hojeISO(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function mesAtualISO(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)}
+function agora(){var d=new Date();return pad(d.getHours())+":"+pad(d.getMinutes())}
+function br(iso){if(!iso||iso.length<10)return "–";var p=iso.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
+function nomeMes(ym){
+  if(!ym||ym.length<7)return "–";
+  var p=ym.split("-");
+  return (MESES[Number(p[1])-1]||p[1])+" de "+p[0];
+}
+function periodoAuto(){return new Date().getHours()<12?"Manhã":"Tarde"}
+function norm(s){return String(s||"").trim().replace(/\s+/g," ")}
+function el(t,txt,cls){var e=document.createElement(t);if(txt!=null)e.textContent=txt;if(cls)e.className=cls;return e}
+function diffMin(h1,h2){
+  if(!h1||!h2)return null;
+  var a=String(h1).split(":").map(Number), b=String(h2).split(":").map(Number);
+  if(a.length<2||b.length<2)return null;
+  var d=(b[0]*60+b[1])-(a[0]*60+a[1]);
+  return d>=0&&d<=720?d:null;
+}
+function fmtDur(min){
+  if(min==null)return "–";
+  if(min<60)return min+" min";
+  return Math.floor(min/60)+"h "+pad(min%60)+"m";
+}
+function setMsg(id,txt,type){
+  var e=$(id);
+  e.textContent=txt||"";
+  e.className="msg "+(type||"err");
+}
+function makeUid(){
+  return "r_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8);
+}
+
+/* ===== IndexedDB ===== */
+function openIDB(){
+  return new Promise(function(res,rej){
+    if(!window.indexedDB){rej(new Error("Sem IndexedDB"));return}
+    var req=indexedDB.open(IDB_NAME,1);
+    req.onupgradeneeded=function(){
+      var d=req.result;
+      if(!d.objectStoreNames.contains(IDB_STORE)) d.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess=function(){res(req.result)};
+    req.onerror=function(){rej(req.error)};
+  });
+}
+function idbGet(){
+  return openIDB().then(function(d){
+    return new Promise(function(res,rej){
+      var tx=d.transaction(IDB_STORE,"readonly");
+      var req=tx.objectStore(IDB_STORE).get(IDB_KEY);
+      req.onsuccess=function(){res(req.result||null)};
+      req.onerror=function(){rej(req.error)};
+    });
+  });
+}
+function idbSet(val){
+  return openIDB().then(function(d){
+    return new Promise(function(res,rej){
+      var tx=d.transaction(IDB_STORE,"readwrite");
+      tx.objectStore(IDB_STORE).put(val,IDB_KEY);
+      tx.oncomplete=function(){res()};
+      tx.onerror=function(){rej(tx.error)};
+    });
+  }).catch(function(){});
+}
+
+/* ===== Base de dados ===== */
+function novo(){return{versao:4,seq:{aluno:0,professor:0,registro:0},alunos:[],professores:[],registros:[],atualizadoEm:new Date().toISOString()}}
+var db=novo();
+var meta={lastBackup:null, cloudUrl:DEFAULT_CLOUD_URL||"", lastSync:null};
+try{
+  var m=JSON.parse(localStorage.getItem(META_KEY));
+  if(m){
+    meta.lastBackup=m.lastBackup||null;
+    meta.lastSync=m.lastSync||null;
+    if(m.cloudUrl) meta.cloudUrl=m.cloudUrl;
+  }
+}catch(e){}
+if(DEFAULT_CLOUD_URL && !meta.cloudUrl) meta.cloudUrl=DEFAULT_CLOUD_URL;
+
+function saveMeta(){try{localStorage.setItem(META_KEY,JSON.stringify(meta))}catch(e){}}
+function persist(){
+  db.atualizadoEm=new Date().toISOString();
+  try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}
+  idbSet(db);
+  updateBackupInfo();
+}
+function porId(t,id){return db[t].find(function(x){return x.id===id})}
+function getAluno(nome,ano,turma){
+  var k=norm(nome).toLowerCase();
+  var a=db.alunos.find(function(x){return x.nome.toLowerCase()===k&&x.ano===ano&&x.turma===turma});
+  if(!a){a={id:++db.seq.aluno,nome:norm(nome),ano:ano,turma:turma};db.alunos.push(a)}
+  return a;
+}
+function getProf(nome){
+  var k=norm(nome).toLowerCase();
+  var p=db.professores.find(function(x){return x.nome.toLowerCase()===k});
+  if(!p){p={id:++db.seq.professor,nome:norm(nome)};db.professores.push(p)}
+  return p;
+}
+function migraEstrutura(d){
+  if(!d||typeof d!=="object")return novo();
+  if(!d.seq)d.seq={aluno:0,professor:0,registro:0};
+  if(!Array.isArray(d.alunos))d.alunos=[];
+  if(!Array.isArray(d.professores))d.professores=[];
+  if(!Array.isArray(d.registros))d.registros=[];
+  d.registros.forEach(function(r){
+    if(typeof r.arquivado!=="boolean")r.arquivado=false;
+    if(r.saida===undefined)r.saida=null;
+    if(!r.uid)r.uid="leg_"+r.data+"_"+r.hora+"_"+r.id;
+    if(!r.atualizadoEm)r.atualizadoEm=new Date().toISOString();
+  });
+  d.versao=4;
+  return d;
+}
+function carregaLocalSync(){
+  try{
+    var d=JSON.parse(localStorage.getItem(KEY));
+    if(d&&d.versao>=2){db=migraEstrutura(d);return true}
+  }catch(e){}
+  try{
+    var old=JSON.parse(localStorage.getItem(OLD)||"[]");
+    if(Array.isArray(old)&&old.length){
+      old.forEach(function(r){
+        var m=(r.sala||"").match(/^(\d)º Ano ([A-C])$/);
+        var a=getAluno(r.nome,m?Number(m[1]):null,m?m[2]:"");
+        db.registros.push({
+          id:++db.seq.registro,uid:makeUid(),data:r.data,hora:r.hora,saida:null,
+          periodo:r.periodo||null,maquina:r.maq,alunoId:a.id,professorId:null,
+          ativo:!!r.ativo,arquivado:false,atualizadoEm:new Date().toISOString()
+        });
+      });
+      persist();
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+function vista(r){
+  var a=porId("alunos",r.alunoId), p=porId("professores",r.professorId);
+  return {
+    r:r,
+    nome:a?a.nome:"",
+    ano:a?a.ano:null,
+    turma:a?a.turma:"",
+    sala:a&&a.ano?a.ano+"º Ano "+a.turma:"–",
+    prof:p?p.nome:"–",
+    dur:diffMin(r.hora,r.saida)
+  };
+}
+
+function toCloudRecord(r){
+  var v=vista(r);
+  return {
+    id: r.uid,
+    data: r.data,
+    hora: r.hora,
+    saida: r.saida || "",
+    periodo: r.periodo || "",
+    nome: v.nome,
+    ano: v.ano || "",
+    turma: v.turma || "",
+    maquina: r.maquina,
+    professor: v.prof === "–" ? "" : v.prof,
+    ativo: !!r.ativo,
+    arquivado: !!r.arquivado,
+    atualizadoEm: r.atualizadoEm || new Date().toISOString()
+  };
+}
+
+/* ===== Sincronização com Google Sheets (Apps Script) ===== */
+function setCloudBadge(state, text){
+  var b=$("cloudBadge");
+  b.className="shield"+(state?" "+state:"");
+  b.textContent=text;
+}
+
+function getCloudUrl(){
+  return norm(meta.cloudUrl || DEFAULT_CLOUD_URL || "");
+}
+
+async function cloudPost(payload){
+  var url=getCloudUrl();
+  if(!url) return null;
+  setCloudBadge("syncing","↻ Salvando na nuvem...");
+  try{
+    var resp=await fetch(url,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(payload)
+    });
+    var data=await resp.json();
+    if(!data||!data.ok) throw new Error(data&&data.error?data.error:"Erro na nuvem");
+    meta.lastSync=new Date().toISOString();
+    saveMeta();
+    setCloudBadge("online","● Nuvem Conectada");
+    updateBackupInfo();
+    return data;
+  }catch(e){
+    setCloudBadge("err","● Erro na nuvem (salvo local)");
+    return null;
+  }
+}
+
+async function syncFromCloud(silent){
+  var url=getCloudUrl();
+  if(!url){
+    setCloudBadge("","● Modo Local (clique para configurar nuvem)");
+    return false;
+  }
+  setCloudBadge("syncing","↻ Sincronizando...");
+  try{
+    var resp=await fetch(url+"?t="+Date.now(),{method:"GET"});
+    var data=await resp.json();
+    if(!data||!data.ok||!Array.isArray(data.registros)) throw new Error("Resposta inválida");
+
+    var byUid={};
+    db.registros.forEach(function(r){byUid[r.uid]=r});
+
+    var mudancas=0;
+    data.registros.forEach(function(cr){
+      if(!cr||!cr.id) return;
+      var local=byUid[cr.id];
+      var a=getAluno(cr.nome||"Aluno", cr.ano?Number(cr.ano):null, cr.turma||"");
+      var p=cr.professor?getProf(cr.professor):null;
+      var cloudTime=cr.atualizadoEm?Date.parse(cr.atualizadoEm):0;
+      var localTime=local&&local.atualizadoEm?Date.parse(local.atualizadoEm):0;
+
+      if(!local){
+        db.registros.push({
+          id:++db.seq.registro,
+          uid:String(cr.id),
+          data:String(cr.data||"").slice(0,10),
+          hora:String(cr.hora||"").slice(0,5),
+          saida:cr.saida?String(cr.saida).slice(0,5):null,
+          periodo:cr.periodo||null,
+          maquina:Number(cr.maquina)||1,
+          alunoId:a.id,
+          professorId:p?p.id:null,
+          ativo:cr.ativo===true||cr.ativo==="TRUE"||cr.ativo==="true",
+          arquivado:cr.arquivado===true||cr.arquivado==="TRUE"||cr.arquivado==="true",
+          atualizadoEm:cr.atualizadoEm||new Date().toISOString()
+        });
+        mudancas++;
+      }else if(cloudTime>localTime){
+        local.data=String(cr.data||local.data).slice(0,10);
+        local.hora=String(cr.hora||local.hora).slice(0,5);
+        local.saida=cr.saida?String(cr.saida).slice(0,5):null;
+        local.periodo=cr.periodo||local.periodo;
+        local.maquina=Number(cr.maquina)||local.maquina;
+        local.alunoId=a.id;
+        local.professorId=p?p.id:null;
+        local.ativo=cr.ativo===true||cr.ativo==="TRUE"||cr.ativo==="true";
+        local.arquivado=cr.arquivado===true||cr.arquivado==="TRUE"||cr.arquivado==="true";
+        local.atualizadoEm=cr.atualizadoEm;
+        mudancas++;
+      }
+    });
+
+    if(mudancas>0) persist();
+    meta.lastSync=new Date().toISOString();
+    saveMeta();
+    setCloudBadge("online","● Nuvem Conectada");
+    renderAll();
+    if(!silent) setMsg("cmsg","Sincronizado com sucesso! "+data.registros.length+" registro(s) na planilha.","ok");
+    return true;
+  }catch(e){
+    setCloudBadge("err","● Falha ao conectar à nuvem");
+    if(!silent) setMsg("cmsg","Não foi possível conectar. Verifique se o link termina em /exec e se a implantação está para 'Qualquer pessoa'.","err");
+    return false;
+  }
+}
+
+async function initStorage(){
+  carregaLocalSync();
+  try{
+    var fromIdb=await idbGet();
+    if(fromIdb&&Array.isArray(fromIdb.registros)){
+      fromIdb=migraEstrutura(fromIdb);
+      var idbTime=fromIdb.atualizadoEm?Date.parse(fromIdb.atualizadoEm):0;
+      var locTime=db.atualizadoEm?Date.parse(db.atualizadoEm):0;
+      if(fromIdb.registros.length>db.registros.length || (fromIdb.registros.length===db.registros.length && idbTime>locTime)){
+        db=fromIdb;
+        try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}
+      }else{
+        await idbSet(db);
+      }
+    }else{
+      await idbSet(db);
+    }
+  }catch(e){}
+
+  if(navigator.storage&&navigator.storage.persist){
+    try{await navigator.storage.persist()}catch(e){}
+  }
+
+  $("cloudUrlInput").value=getCloudUrl();
+  renderAll();
+  if(getCloudUrl()) syncFromCloud(true);
+}
+
+/* ===== Navegação por Abas ===== */
+function openTab(target){
+  document.querySelectorAll(".tab").forEach(function(b){
+    var on=b.getAttribute("data-tab")===target;
+    b.classList.toggle("active",on);
+    b.setAttribute("aria-selected",on?"true":"false");
+  });
+  document.querySelectorAll(".view").forEach(function(v){
+    v.hidden=v.id!=="view-"+target;
+  });
+  if(target==="relatorio") renderRelatorio();
+  if(target==="backup") updateBackupInfo();
+}
+document.querySelectorAll(".tab").forEach(function(btn){
+  btn.onclick=function(){openTab(btn.getAttribute("data-tab"))};
+});
+$("cloudBadge").onclick=function(){
+  if(getCloudUrl()) syncFromCloud(false);
+  else openTab("backup");
+};
+
+/* ===== Formulário ===== */
+for(var i=1;i<=8;i++){var o=el("option","Máquina "+i);o.value=i;$("maq").appendChild(o)}
+$("hoje").textContent="Hoje: "+br(hojeISO());
+$("fdata").value=hojeISO();
+$("rmes").value=mesAtualISO();
+
+function fillAnos(){
+  var f=FAIXA[$("per").value], a=$("ano"), cur=Number(a.value);
+  a.textContent="";
+  for(var n=f[0];n<=f[1];n++){var o=el("option",n+"º Ano");o.value=n;a.appendChild(o)}
+  if(cur>=f[0]&&cur<=f[1]) a.value=cur;
+}
+function tick(){if(editId==null)$("hora").value=agora()}
+$("per").value=periodoAuto();fillAnos();tick();setInterval(tick,1000);
+$("per").addEventListener("change",fillAnos);
+$("tur").addEventListener("input",function(){this.value=this.value.toUpperCase().replace(/[^A-C]/g,"")});
+
+$("nome").addEventListener("change",function(){
+  if(editId!=null)return;
+  var k=norm(this.value).toLowerCase();
+  if(!k)return;
+  var match=null;
+  for(var i=db.registros.length-1;i>=0;i--){
+    var a=porId("alunos",db.registros[i].alunoId);
+    if(a&&a.nome.toLowerCase()===k){match={a:a,r:db.registros[i]};break}
+  }
+  if(match&&match.a.ano){
+    var p=match.r.periodo||periodoAuto();
+    $("per").value=p;fillAnos();
+    var f=FAIXA[p];
+    if(match.a.ano>=f[0]&&match.a.ano<=f[1]) $("ano").value=match.a.ano;
+    if(match.a.turma) $("tur").value=match.a.turma;
+  }
+});
+
+function fimEdicao(){
+  editId=null;
+  $("formTitle").textContent="Registrar entrada no laboratório";
+  $("ok").textContent="Registrar presença";
+  $("cancela").hidden=true;
+  $("f").reset();
+  $("per").value=periodoAuto();fillAnos();selMaq="";tick();
+}
+function editar(v){
+  var r=v.r, a=porId("alunos",r.alunoId), p=porId("professores",r.professorId);
+  editId=r.id;
+  $("formTitle").textContent="Editando registro de "+v.nome+" ("+br(r.data)+")";
+  $("nome").value=v.nome;
+  $("per").value=r.periodo||periodoAuto();fillAnos();
+  if(a&&a.ano){$("ano").value=a.ano;$("tur").value=a.turma}
+  $("prof").value=p?p.nome:"";
+  $("maq").value=r.maquina;
+  $("hora").value=r.hora;
+  $("ok").textContent="Salvar alterações";
+  $("cancela").hidden=false;
+  setMsg("msg","");
+  $("nome").focus();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+$("cancela").onclick=function(){fimEdicao();setMsg("msg","")};
+
+function ativas(){
+  var h=hojeISO();
+  return db.registros.filter(function(r){return !r.arquivado&&r.ativo&&r.data===h});
+}
+function ocupante(n,ignora){
+  return ativas().find(function(r){return r.maquina===n&&r.id!==ignora});
+}
+
+$("f").addEventListener("submit",function(ev){
+  ev.preventDefault();
+  var nome=norm($("nome").value), prof=norm($("prof").value), tur=$("tur").value.toUpperCase(),
+      per=$("per").value, ano=Number($("ano").value), maq=Number($("maq").value);
+  if(!nome){setMsg("msg","Informe o nome do aluno.","err");$("nome").focus();return}
+  if(!/^[A-C]$/.test(tur)){setMsg("msg","Informe a turma: A, B ou C.","err");$("tur").focus();return}
+  if(!prof){setMsg("msg","Informe o professor que liberou o aluno.","err");$("prof").focus();return}
+  var oc=ocupante(maq,editId);
+  if(oc){setMsg("msg","A máquina "+maq+" está em uso por "+vista(oc).nome+". Libere-a ou escolha outra.","err");return}
+  var a=getAluno(nome,ano,tur), p=getProf(prof);
+  var foiEdicao=editId!=null;
+  var alvo=null;
+  if(foiEdicao){
+    alvo=porId("registros",editId);
+    if(alvo){
+      alvo.alunoId=a.id;alvo.professorId=p.id;alvo.periodo=per;alvo.maquina=maq;
+      alvo.atualizadoEm=new Date().toISOString();
+    }
+  }else{
+    alvo={
+      id:++db.seq.registro,uid:makeUid(),data:hojeISO(),hora:agora(),saida:null,
+      periodo:per,maquina:maq,alunoId:a.id,professorId:p.id,ativo:true,arquivado:false,
+      atualizadoEm:new Date().toISOString()
+    };
+    db.registros.push(alvo);
+  }
+  persist();
+  if(alvo) cloudPost({action:"upsert", record:toCloudRecord(alvo)});
+  fimEdicao();
+  $("per").value=per;fillAnos();$("ano").value=ano;$("tur").value=tur;$("prof").value=prof;
+  setMsg("msg",foiEdicao?"Registro atualizado com sucesso.":"Presença de "+nome+" registrada na Máquina "+maq+".","ok");
+  renderAll();
+  $("nome").focus();
+});
+
+/* ===== Painel de máquinas ===== */
+function liberarRegistro(r){
+  r.ativo=false;
+  r.saida=agora();
+  r.atualizadoEm=new Date().toISOString();
+  persist();
+  cloudPost({action:"upsert", record:toCloudRecord(r)});
+  renderAll();
+}
+
+function renderMaqs(){
+  var box=$("maqs");box.textContent="";
+  for(var n=1;n<=8;n++){
+    (function(n){
+      var oc=ocupante(n);
+      var m=el("div",null,"m "+(oc?"busy":"free")+(!oc&&String(n)===selMaq?" sel":""));
+      var top=el("div",null,"top");
+      top.appendChild(el("div",n,"n"));
+      if(oc) top.appendChild(el("div","desde "+oc.hora,"time"));
+      m.appendChild(top);
+      if(oc){
+        var v=vista(oc);
+        m.appendChild(el("div",v.nome,"who"));
+        m.appendChild(el("div",v.sala,"sala-m"));
+        var b=el("button","Liberar máquina");b.type="button";
+        b.onclick=function(){liberarRegistro(oc)};
+        m.appendChild(b);
+      }else{
+        m.appendChild(el("div","Livre","st"));
+        m.setAttribute("role","button");m.tabIndex=0;
+        var pick=function(){$("maq").value=n;selMaq=String(n);renderMaqs();$("nome").focus()};
+        m.onclick=pick;
+        m.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();pick()}};
+      }
+      box.appendChild(m);
+    })(n);
+  }
+}
+
+$("liberarTodas").onclick=function(){
+  var list=ativas();
+  if(!list.length){setMsg("msg","Nenhuma máquina está ocupada neste momento.","err");return}
+  confirmar("Liberar todas as "+list.length+" máquinas em uso agora? Todos os registros permanecerão salvos no histórico.",function(){
+    var h=agora(), nowIso=new Date().toISOString();
+    list.forEach(function(r){r.ativo=false;r.saida=h;r.atualizadoEm=nowIso});
+    persist();
+    cloudPost({action:"bulkUpsert", records:list.map(toCloudRecord)});
+    setMsg("msg",list.length+" máquina(s) liberada(s). Histórico preservado.","ok");
+    renderAll();
+  });
+};
+
+/* ===== Lista e filtros ===== */
+function filtrados(){
+  var s=$("fsala").value, d=$("fdata").value, p=$("fper").value;
+  var q=norm($("fbusca").value).toLowerCase();
+  var verArch=$("verArquivados").checked;
+  return db.registros.map(vista).filter(function(v){
+    if(!verArch && v.r.arquivado) return false;
+    if(s && v.sala!==s) return false;
+    if(d && v.r.data!==d) return false;
+    if(p && v.r.periodo!==p) return false;
+    if(q && v.nome.toLowerCase().indexOf(q)===-1 && v.prof.toLowerCase().indexOf(q)===-1) return false;
+    return true;
+  }).sort(function(a,b){
+    var ka=a.r.data+" "+a.r.hora, kb=b.r.data+" "+b.r.hora;
+    return ka<kb?1:-1;
+  });
+}
+function renderFiltroSalas(selectId){
+  var elSel=$(selectId), cur=elSel.value, set={};
+  db.registros.map(vista).forEach(function(v){if(v.sala!=="–")set[v.sala]=1});
+  elSel.textContent="";
+  var o=el("option","Todas as salas");o.value="";elSel.appendChild(o);
+  Object.keys(set).sort().forEach(function(s){var x=el("option",s);x.value=s;elSel.appendChild(x)});
+  elSel.value=set[cur]?cur:"";
+}
+function renderDatalists(){
+  var dlP=$("profs");dlP.textContent="";
+  db.professores.slice().sort(function(a,b){return a.nome.localeCompare(b.nome)}).forEach(function(p){
+    var o=document.createElement("option");o.value=p.nome;dlP.appendChild(o);
+  });
+  var dlA=$("alunosList");dlA.textContent="";
+  var vistos={};
+  db.alunos.slice().sort(function(a,b){return a.nome.localeCompare(b.nome)}).forEach(function(a){
+    var k=a.nome.toLowerCase();
+    if(vistos[k])return;vistos[k]=1;
+    var o=document.createElement("option");o.value=a.nome;dlA.appendChild(o);
+  });
+}
+function renderRows(){
+  var list=filtrados(), tb=$("rows");tb.textContent="";
+  list.forEach(function(v){
+    var r=v.r, tr=el("tr",null,r.arquivado?"archived":"");
+    tr.appendChild(el("td",br(r.data)));
+    var hrTxt=r.hora+(r.saida?" → "+r.saida:(r.ativo&&r.data===hojeISO()?" (em uso)":""));
+    tr.appendChild(el("td",hrTxt));
+    tr.appendChild(el("td",r.periodo||"–"));
+    tr.appendChild(el("td",v.nome+(r.arquivado?" [Arquivado]":"")));
+    tr.appendChild(el("td",v.sala));
+    var tdM=el("td");
+    var cls="tag"+(r.arquivado?" arch":(r.ativo&&r.data===hojeISO()?" on":" done"));
+    tdM.appendChild(el("span","M"+r.maquina,cls));
+    tr.appendChild(tdM);
+    tr.appendChild(el("td",v.prof));
+
+    var tdB=el("td",null,"btns");
+    if(!r.arquivado){
+      if(r.ativo&&r.data===hojeISO()){
+        var lib=el("button","Liberar","sm");lib.type="button";
+        lib.onclick=function(){liberarRegistro(r)};
+        tdB.appendChild(lib);
+      }
+      var e=el("button","Editar","sm");e.type="button";e.onclick=function(){editar(v)};
+      var arq=el("button","Arquivar","sm warn");arq.type="button";
+      arq.title="Oculta dos relatórios sem apagar do banco de dados";
+      arq.onclick=function(){
+        confirmar("Arquivar o registro de "+v.nome+"? Ele não será apagado e poderá ser restaurado depois.",function(){
+          r.arquivado=true;r.ativo=false;if(!r.saida)r.saida=agora();r.atualizadoEm=new Date().toISOString();
+          persist();cloudPost({action:"upsert", record:toCloudRecord(r)});
+          if(editId===r.id)fimEdicao();renderAll();
+        });
+      };
+      tdB.appendChild(e);tdB.appendChild(arq);
+    }else{
+      var rest=el("button","Restaurar","sm success");rest.type="button";
+      rest.onclick=function(){
+        r.arquivado=false;r.atualizadoEm=new Date().toISOString();
+        persist();cloudPost({action:"upsert", record:toCloudRecord(r)});renderAll();
+      };
+      tdB.appendChild(rest);
+    }
+    tr.appendChild(tdB);
+    tb.appendChild(tr);
+  });
+  $("vazio").hidden=list.length>0;
+  var ativosTotal=db.registros.filter(function(r){return !r.arquivado}).length;
+  $("total").textContent=ativas().length+" em uso · "+ativosTotal+" salvos";
+}
+
+$("fsala").onchange=renderRows;
+$("fper").onchange=renderRows;
+$("fdata").onchange=renderRows;
+$("fbusca").oninput=renderRows;
+$("verArquivados").onchange=renderRows;
+$("todas").onclick=function(){$("fdata").value="";renderRows()};
+
+/* ===== Modal ===== */
+function confirmar(t,fn){
+  $("dtxt").textContent=t;acao=fn;
+  if($("dlg").showModal)$("dlg").showModal();else if(window.confirm(t))fn();
+}
+$("dno").onclick=function(){$("dlg").close();acao=null};
+$("dyes").onclick=function(){$("dlg").close();if(acao)acao();acao=null};
+
+/* ===== Relatório Mensal ===== */
+function dadosDoMes(){
+  var ym=$("rmes").value || mesAtualISO();
+  var per=$("rper").value;
+  var sala=$("rsala").value;
+  var lista=db.registros.filter(function(r){
+    return !r.arquivado && r.data && r.data.indexOf(ym)===0;
+  }).map(vista).filter(function(v){
+    return (!per||v.r.periodo===per)&&(!sala||v.sala===sala);
+  }).sort(function(a,b){
+    return (a.r.data+a.r.hora)<(b.r.data+b.r.hora)?-1:1;
+  });
+
+  var manha=0, tarde=0, alunosUnicos={}, salasMap={}, profsMap={}, maqsMap={}, alunosMap={}, diasMap={};
+  var somaDur=0, qtdDur=0;
+  for(var m=1;m<=8;m++) maqsMap["Máquina "+m]=0;
+
+  lista.forEach(function(v){
+    var r=v.r;
+    if(r.periodo==="Manhã") manha++;
+    else if(r.periodo==="Tarde") tarde++;
+    alunosUnicos[v.nome.toLowerCase()+"|"+v.sala]=1;
+    salasMap[v.sala]=(salasMap[v.sala]||0)+1;
+    profsMap[v.prof]=(profsMap[v.prof]||0)+1;
+    maqsMap["Máquina "+r.maquina]=(maqsMap["Máquina "+r.maquina]||0)+1;
+    var aLabel=v.nome+" ("+v.sala+")";
+    alunosMap[aLabel]=(alunosMap[aLabel]||0)+1;
+    if(!diasMap[r.data]) diasMap[r.data]={data:r.data,manha:0,tarde:0,total:0,salas:{}};
+    diasMap[r.data].total++;
+    if(r.periodo==="Manhã") diasMap[r.data].manha++;
+    if(r.periodo==="Tarde") diasMap[r.data].tarde++;
+    if(v.sala!=="–") diasMap[r.data].salas[v.sala]=1;
+    if(v.dur!=null){somaDur+=v.dur;qtdDur++}
+  });
+
+  function toSortedArr(obj,keepOrder){
+    var arr=Object.keys(obj).map(function(k){return{label:k,val:obj[k]}});
+    if(!keepOrder) arr.sort(function(a,b){return b.val-a.val||a.label.localeCompare(b.label)});
+    return arr;
+  }
+
+  var diasArr=Object.keys(diasMap).sort().map(function(k){
+    var d=diasMap[k];
+    return{data:d.data,manha:d.manha,tarde:d.tarde,total:d.total,salas:Object.keys(d.salas).sort().join(", ")||"–"};
+  });
+
+  return {
+    ym:ym, per:per, sala:sala, lista:lista,
+    total:lista.length, manha:manha, tarde:tarde,
+    unicos:Object.keys(alunosUnicos).length,
+    salas:toSortedArr(salasMap),
+    profs:toSortedArr(profsMap),
+    maqs:toSortedArr(maqsMap,true),
+    topAlunos:toSortedArr(alunosMap).slice(0,10),
+    dias:diasArr,
+    tempoMedio:qtdDur?Math.round(somaDur/qtdDur):null
+  };
+}
+
+function renderBars(containerId,arr,total,green){
+  var box=$(containerId);box.textContent="";
+  if(!arr.length || !total){
+    box.appendChild(el("div","Sem dados neste período.","empty"));
+    return;
+  }
+  var max=Math.max.apply(null,arr.map(function(x){return x.val}))||1;
+  arr.forEach(function(item){
+    var row=el("div",null,"bar-row");
+    var pct=Math.round((item.val/total)*100);
+    var meta=el("div",null,"bar-meta");
+    meta.appendChild(el("span",item.label));
+    meta.appendChild(el("span",item.val+" ("+pct+"%)"));
+    var track=el("div",null,"bar-track");
+    var fill=el("div",null,"bar-fill"+(green?" green":""));
+    fill.style.width=Math.max(item.val>0?4:0,Math.round((item.val/max)*100))+"%";
+    track.appendChild(fill);
+    row.appendChild(meta);row.appendChild(track);
+    box.appendChild(row);
+  });
+}
+
+function renderRelatorio(){
+  var rep=dadosDoMes();
+  $("kTotal").textContent=rep.total;
+  $("kSplit").textContent="Manhã: "+rep.manha+" · Tarde: "+rep.tarde;
+  $("kUnicos").textContent=rep.unicos;
+  $("kSalas").textContent=rep.salas.length+" sala(s) atendida(s)";
+  $("kDias").textContent=rep.dias.length;
+  $("kMedia").textContent="Média: "+(rep.dias.length?(rep.total/rep.dias.length).toFixed(1):0)+" / dia";
+  $("kTempo").textContent=fmtDur(rep.tempoMedio);
+  $("kProfs").textContent=rep.profs.length+" professor(es)";
+
+  renderBars("rPorSala",rep.salas,rep.total,false);
+  renderBars("rPorProf",rep.profs,rep.total,true);
+  renderBars("rPorMaq",rep.maqs,rep.total,false);
+  renderBars("rTopAlunos",rep.topAlunos,rep.total,true);
+
+  var tb=$("rDiaRows");tb.textContent="";
+  rep.dias.forEach(function(d){
+    var tr=el("tr");
+    tr.appendChild(el("td",br(d.data)));
+    tr.appendChild(el("td",String(d.manha)));
+    tr.appendChild(el("td",String(d.tarde)));
+    tr.appendChild(el("td",String(d.total)));
+    tr.appendChild(el("td",d.salas));
+    tb.appendChild(tr);
+  });
+  $("rVazio").hidden=rep.dias.length>0;
+}
+$("rmes").onchange=renderRelatorio;
+$("rper").onchange=renderRelatorio;
+$("rsala").onchange=renderRelatorio;
+
+/* ===== Exportação CSV & PDF ===== */
+function downloadBlob(blob,filename){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url)},200);
+}
+function csvEsc(v){return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'}
+function exportarCSV(list,filename){
+  var head=["Data","Entrada","Saída","Duração (min)","Período","Nome do Aluno","Sala","Máquina","Professor","Status"];
+  var lines=[head.map(csvEsc).join(";")];
+  list.forEach(function(v){
+    var r=v.r;
+    lines.push([
+      br(r.data), r.hora, r.saida||"", v.dur!=null?v.dur:"",
+      r.periodo||"", v.nome, v.sala, "Máquina "+r.maquina, v.prof,
+      r.arquivado?"Arquivado":(r.ativo?"Em uso":"Concluído")
+    ].map(csvEsc).join(";"));
+  });
+  downloadBlob(new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8;"}),filename);
+}
+
+$("csvDia").onclick=function(){
+  var list=filtrados();
+  if(!list.length){setMsg("msg","Não há registros neste filtro para exportar.","err");return}
+  exportarCSV(list,"presenca-laboratorio-"+($("fdata").value||"todas-datas")+".csv");
+  setMsg("msg","Planilha CSV baixada com "+list.length+" registro(s).","ok");
+};
+$("csvMensal").onclick=function(){
+  var rep=dadosDoMes();
+  if(!rep.total){setMsg("rmsg","Não há registros neste mês para exportar.","err");return}
+  exportarCSV(rep.lista,"relatorio-mensal-laboratorio-"+rep.ym+".csv");
+  setMsg("rmsg","Planilha do mês "+nomeMes(rep.ym)+" exportada com sucesso.","ok");
+};
+
+$("pdf").onclick=function(){
+  var list=filtrados();
+  if(!list.length){setMsg("msg","Não há registros para exportar neste filtro.","err");return}
+  if(!window.jspdf||!window.jspdf.jsPDF){setMsg("msg","Biblioteca de PDF indisponível (verifique a internet).","err");return}
+  var doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});
+  var d=$("fdata").value, s=$("fsala").value, p=$("fper").value;
+  doc.setFontSize(17);doc.text("Lista de Presença do Laboratório",14,18);
+  doc.setFontSize(10);doc.setTextColor(90);
+  doc.text("Filtro: "+(d?br(d):"Todas as datas")+(p?"  |  Período: "+p:"")+(s?"  |  Sala: "+s:""),14,25);
+  doc.text("Emitido em: "+br(hojeISO())+" às "+agora()+"  |  Total de registros: "+list.length,14,31);
+  doc.autoTable({
+    startY:37,
+    head:[["Data","Entrada","Saída","Período","Nome do aluno","Sala","Professor","Máq."]],
+    body:list.slice().reverse().map(function(v){
+      return[br(v.r.data),v.r.hora,v.r.saida||"–",v.r.periodo||"–",v.nome,v.sala,v.prof,String(v.r.maquina)];
+    }),
+    headStyles:{fillColor:[43,75,216]},styles:{fontSize:9},
+    alternateRowStyles:{fillColor:[245,247,250]},
+    columnStyles:{7:{halign:"center",cellWidth:12}}
+  });
+  doc.save("presenca-laboratorio-"+(d||hojeISO())+".pdf");
+  setMsg("msg","PDF gerado com sucesso.","ok");
+};
+
+$("pdfMensal").onclick=function(){
+  var rep=dadosDoMes();
+  if(!rep.total){setMsg("rmsg","Não há registros neste mês para gerar o PDF.","err");return}
+  if(!window.jspdf||!window.jspdf.jsPDF){setMsg("rmsg","Biblioteca de PDF indisponível (verifique a internet).","err");return}
+
+  var doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});
+  doc.setFillColor(43,75,216);doc.rect(0,0,210,30,"F");
+  doc.setTextColor(255,255,255);doc.setFontSize(18);
+  doc.text("Relatório Mensal — Laboratório de Informática",14,14);
+  doc.setFontSize(11);
+  doc.text("Referência: "+nomeMes(rep.ym)+(rep.per?" · Período: "+rep.per:"")+(rep.sala?" · Sala: "+rep.sala:""),14,22);
+
+  doc.setTextColor(40,40,40);doc.setFontSize(9.5);
+  doc.text("Emitido em "+br(hojeISO())+" às "+agora(),14,37);
+
+  doc.autoTable({
+    startY:41,
+    head:[["Total de Presenças","Manhã","Tarde","Alunos Únicos","Dias com Uso","Média / Dia","Tempo Médio"]],
+    body:[[
+      String(rep.total), String(rep.manha), String(rep.tarde), String(rep.unicos),
+      String(rep.dias.length), rep.dias.length?(rep.total/rep.dias.length).toFixed(1):"0",
+      fmtDur(rep.tempoMedio)
+    ]],
+    headStyles:{fillColor:[30,41,59],fontSize:8.5,halign:"center"},
+    bodyStyles:{fontSize:10,fontStyle:"bold",halign:"center"}
+  });
+
+  var y=doc.lastAutoTable.finalY+8;
+  doc.setFontSize(12);doc.setTextColor(22,33,43);
+  doc.text("1. Atendimentos por Sala / Turma",14,y);
+  doc.autoTable({
+    startY:y+3,head:[["Sala / Turma","Presenças","Participação"]],
+    body:rep.salas.map(function(x){return[x.label,String(x.val),Math.round((x.val/rep.total)*100)+"%"]}),
+    headStyles:{fillColor:[43,75,216]},styles:{fontSize:9},columnStyles:{1:{halign:"center"},2:{halign:"center"}}
+  });
+
+  y=doc.lastAutoTable.finalY+8;if(y>245){doc.addPage();y=18}
+  doc.setFontSize(12);doc.text("2. Liberações por Professor",14,y);
+  doc.autoTable({
+    startY:y+3,head:[["Professor","Liberações","Participação"]],
+    body:rep.profs.map(function(x){return[x.label,String(x.val),Math.round((x.val/rep.total)*100)+"%"]}),
+    headStyles:{fillColor:[29,154,95]},styles:{fontSize:9},columnStyles:{1:{halign:"center"},2:{halign:"center"}}
+  });
+
+  y=doc.lastAutoTable.finalY+8;if(y>245){doc.addPage();y=18}
+  doc.setFontSize(12);doc.text("3. Utilização por Máquina",14,y);
+  doc.autoTable({
+    startY:y+3,head:[["Máquina","Usos no mês","Participação"]],
+    body:rep.maqs.map(function(x){return[x.label,String(x.val),Math.round((x.val/rep.total)*100)+"%"]}),
+    headStyles:{fillColor:[43,75,216]},styles:{fontSize:9},columnStyles:{1:{halign:"center"},2:{halign:"center"}}
+  });
+
+  y=doc.lastAutoTable.finalY+8;if(y>235){doc.addPage();y=18}
+  doc.setFontSize(12);doc.text("4. Movimento Dia a Dia",14,y);
+  doc.autoTable({
+    startY:y+3,head:[["Data","Manhã","Tarde","Total","Salas Atendidas"]],
+    body:rep.dias.map(function(d){return[br(d.data),String(d.manha),String(d.tarde),String(d.total),d.salas]}),
+    headStyles:{fillColor:[30,41,59]},styles:{fontSize:9},
+    columnStyles:{1:{halign:"center"},2:{halign:"center"},3:{halign:"center"}}
+  });
+
+  doc.addPage();
+  doc.setFontSize(13);doc.text("5. Registro Detalhado Completo — "+nomeMes(rep.ym),14,16);
+  doc.autoTable({
+    startY:21,
+    head:[["Data","Entrada","Saída","Período","Nome do Aluno","Sala","Professor","Máq."]],
+    body:rep.lista.map(function(v){
+      return[br(v.r.data),v.r.hora,v.r.saida||"–",v.r.periodo||"–",v.nome,v.sala,v.prof,String(v.r.maquina)];
+    }),
+    headStyles:{fillColor:[43,75,216]},styles:{fontSize:8.5},
+    alternateRowStyles:{fillColor:[245,247,250]},columnStyles:{7:{halign:"center",cellWidth:12}}
+  });
+
+  var totalPages=doc.internal.getNumberOfPages();
+  for(var p=1;p<=totalPages;p++){
+    doc.setPage(p);doc.setFontSize(8);doc.setTextColor(130);
+    doc.text("Presença no Laboratório · "+nomeMes(rep.ym)+" · Página "+p+" de "+totalPages,14,291);
+  }
+  doc.save("relatorio-mensal-laboratorio-"+rep.ym+".pdf");
+  setMsg("rmsg","Relatório Mensal em PDF gerado com sucesso.","ok");
+};
+
+/* ===== Controles de Nuvem & Backup ===== */
+function updateBackupInfo(){
+  var total=db.registros.length;
+  var arch=db.registros.filter(function(r){return r.arquivado}).length;
+  $("bTotal").textContent=total;
+  $("bArch").textContent=arch+" arquivado(s)";
+  $("bCloud").textContent=getCloudUrl()?"Conectada":"Não conectada";
+  if(meta.lastSync){
+    var ds=new Date(meta.lastSync);
+    $("bLastSync").textContent="Última sinc.: "+pad(ds.getDate())+"/"+pad(ds.getMonth()+1)+" "+pad(ds.getHours())+":"+pad(ds.getMinutes());
+  }else{
+    $("bLastSync").textContent="Nunca sincronizado";
+  }
+  if(meta.lastBackup){
+    var d=new Date(meta.lastBackup);
+    $("bLast").textContent=pad(d.getDate())+"/"+pad(d.getMonth()+1)+"/"+d.getFullYear();
+  }else{
+    $("bLast").textContent="Nunca feito";
+  }
+}
+
+$("saveCloudUrl").onclick=async function(){
+  var u=norm($("cloudUrlInput").value);
+  if(u && u.indexOf("https://script.google.com/")!==0){
+    setMsg("cmsg","O link deve começar com https://script.google.com/macros/s/...","err");
+    return;
+  }
+  meta.cloudUrl=u;
+  saveMeta();
+  if(!u){
+    setCloudBadge("","● Modo Local (clique para configurar nuvem)");
+    setMsg("cmsg","Link removido. O aplicativo está em modo local.","ok");
+    updateBackupInfo();
+    return;
+  }
+  setMsg("cmsg","Testando conexão com a Planilha do Google...","ok");
+  await syncFromCloud(false);
+};
+
+$("syncNowBtn").onclick=function(){
+  if(!getCloudUrl()){setMsg("cmsg","Cole primeiro o link do Web App acima.","err");return}
+  syncFromCloud(false);
+};
+
+$("pushAllBtn").onclick=async function(){
+  if(!getCloudUrl()){setMsg("cmsg","Cole primeiro o link do Web App acima.","err");return}
+  if(!db.registros.length){setMsg("cmsg","Não há registros locais para enviar.","err");return}
+  setMsg("cmsg","Enviando "+db.registros.length+" registro(s) para a planilha...","ok");
+  var res=await cloudPost({action:"bulkUpsert", records:db.registros.map(toCloudRecord)});
+  if(res) setMsg("cmsg","Todos os "+db.registros.length+" registros locais foram enviados para a nuvem!","ok");
+  else setMsg("cmsg","Falha ao enviar registros. Verifique a conexão e o link.","err");
+};
+
+$("exportJson").onclick=function(){
+  var payload={app:"PresencaLaboratorio",exportadoEm:new Date().toISOString(),db:db};
+  downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),"backup-laboratorio-"+hojeISO()+".json");
+  meta.lastBackup=new Date().toISOString();
+  saveMeta();updateBackupInfo();
+  setMsg("bmsg","Backup salvo com "+db.registros.length+" registros.","ok");
+};
+
+$("importJsonBtn").onclick=function(){$("importJsonFile").click()};
+$("importJsonFile").onchange=function(ev){
+  var file=ev.target.files&&ev.target.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(){
+    try{
+      var parsed=JSON.parse(reader.result);
+      var incoming=parsed.db?parsed.db:parsed;
+      if(!incoming||!Array.isArray(incoming.registros)) throw new Error("Formato inválido");
+      incoming=migraEstrutura(incoming);
+      var assinaturas={};
+      db.registros.forEach(function(r){
+        var v=vista(r);
+        assinaturas[r.data+"|"+r.hora+"|"+v.nome.toLowerCase()+"|"+r.maquina]=1;
+      });
+      var adicionados=[];
+      incoming.registros.forEach(function(r){
+        var aInc=incoming.alunos.find(function(x){return x.id===r.alunoId});
+        var pInc=incoming.professores.find(function(x){return x.id===r.professorId});
+        var nomeA=aInc?aInc.nome:"Aluno";
+        var key=r.data+"|"+r.hora+"|"+norm(nomeA).toLowerCase()+"|"+r.maquina;
+        if(assinaturas[key]) return;
+        var a=getAluno(nomeA,aInc?aInc.ano:null,aInc?aInc.turma:"");
+        var p=pInc?getProf(pInc.nome):null;
+        var novoReg={
+          id:++db.seq.registro,uid:r.uid||makeUid(),
+          data:r.data,hora:r.hora,saida:r.saida||null,
+          periodo:r.periodo||null,maquina:r.maquina,
+          alunoId:a.id,professorId:p?p.id:null,
+          ativo:false,arquivado:!!r.arquivado,atualizadoEm:new Date().toISOString()
+        };
+        db.registros.push(novoReg);
+        adicionados.push(novoReg);
+        assinaturas[key]=1;
+      });
+      persist();
+      if(adicionados.length && getCloudUrl()) cloudPost({action:"bulkUpsert", records:adicionados.map(toCloudRecord)});
+      renderAll();
+      setMsg("bmsg","Backup mesclado! "+adicionados.length+" novo(s) registro(s) recuperado(s).","ok");
+    }catch(e){
+      setMsg("bmsg","Arquivo de backup inválido ou corrompido.","err");
+    }
+    ev.target.value="";
+  };
+  reader.readAsText(file);
+};
+
+function renderAll(){
+  renderFiltroSalas("fsala");
+  renderFiltroSalas("rsala");
+  renderDatalists();
+  renderMaqs();
+  renderRows();
+  if(!$("view-relatorio").hidden) renderRelatorio();
+  updateBackupInfo();
+}
+
+initStorage();
+})();
+</script>
+</body>
+</html>
