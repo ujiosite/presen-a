@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Presença no Laboratório — Nuvem & Relatórios</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src https://script.google.com https://*.googleusercontent.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<script>if(window.top!==window.self){document.documentElement.style.display="none";try{window.top.location=window.self.location}catch(e){}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -148,9 +152,28 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
   .form,.filters,.kpis{grid-template-columns:1fr}
   .s2{grid-column:auto}
 }
+
+/* Login e sessão */
+#lock{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:var(--bg);padding:16px}
+body.locked #lock{display:grid}
+body.locked main{display:none}
+.lockbox{width:min(380px,100%);display:grid;gap:12px}
+.lockbox p{margin:0}
+.chip{font-size:.85rem;font-weight:700;background:var(--accent-soft);color:var(--accent);padding:8px 12px;border-radius:10px}
 </style>
 </head>
-<body>
+<body class="locked">
+<div id="lock" role="dialog" aria-modal="true" aria-labelledby="lockT">
+  <form id="lf" class="card lockbox" autocomplete="on">
+    <h2 id="lockT">Acesso restrito</h2>
+    <p class="sub">Entre com seu usuário e senha para acessar a lista de presença do laboratório.</p>
+    <label>Usuário<input id="lu" autocomplete="username" required maxlength="40" autocapitalize="none"></label>
+    <label>Senha<input id="lp" type="password" autocomplete="current-password" required maxlength="100"></label>
+    <label id="lurlw" hidden>Link do Web App (Apps Script)<input id="lurl" type="url" placeholder="https://script.google.com/macros/s/.../exec"></label>
+    <button class="primary" type="submit" id="lbtn">Entrar</button>
+    <p class="msg" id="lmsg" role="alert"></p>
+  </form>
+</div>
 <main>
   <header>
     <div class="brand">
@@ -162,6 +185,8 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
     </div>
     <div class="head-right">
       <div class="count" id="total">0 em uso</div>
+      <span class="chip" id="userChip" hidden></span>
+      <button type="button" class="icon-btn" id="logoutBtn" hidden>Sair</button>
       <button type="button" class="icon-btn" id="themeBtn" title="Alternar tema claro/escuro">Alternar tema</button>
     </div>
   </header>
@@ -407,7 +432,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
    OPCIONAL: Se quiser deixar o link fixo no arquivo HTML para abrir em
    qualquer computador sem precisar colar novamente, cole a URL entre as aspas:
    ========================================================================= */
-var DEFAULT_CLOUD_URL = "https://script.google.com/macros/s/AKfycbwrifTg96rDfT6Dms_wf9xcWvhQl0s2-8ybIEcNTwnfrb4kBL_KosZcev0CRtZc086R/exec";
+var DEFAULT_CLOUD_URL = ""; // cole aqui a NOVA URL /exec do Apps Script (ela é inofensiva sem login)
 
 var KEY="labPresenca.db", OLD="labPresenca.v1", META_KEY="labPresenca.meta", THEME_KEY="labPresenca.theme";
 var IDB_NAME="LabPresencaDB", IDB_STORE="kv", IDB_KEY="main_db";
@@ -416,6 +441,12 @@ var MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto
 
 var $=function(id){return document.getElementById(id)};
 var editId=null, selMaq="", acao=null;
+var auth={token:"",user:"",role:"",nome:""}, dirty=false, cloudMap={}, idleT=null;
+var SESS_KEY="lab.sess", IDLE_MS=15*60*1000;
+function okCloud(r){
+  return !!r&&/^[A-Za-z0-9_\-]{3,80}$/.test(String(r.id))&&/^\d{4}-\d{2}-\d{2}/.test(String(r.data))
+    &&/^\d{2}:\d{2}/.test(String(r.hora))&&Number(r.maquina)>=1&&Number(r.maquina)<=8;
+}
 
 /* ===== Tema ===== */
 function applyTheme(t){
@@ -509,7 +540,7 @@ try{
   if(m){
     meta.lastBackup=m.lastBackup||null;
     meta.lastSync=m.lastSync||null;
-    if(m.cloudUrl) meta.cloudUrl=m.cloudUrl;
+    if(m.cloudUrl&&m.cloudUrl.indexOf("AKfycbwrifTg96")<0) meta.cloudUrl=m.cloudUrl;
   }
 }catch(e){}
 if(DEFAULT_CLOUD_URL && !meta.cloudUrl) meta.cloudUrl=DEFAULT_CLOUD_URL;
@@ -624,9 +655,10 @@ async function cloudPost(payload){
     var resp=await fetch(url,{
       method:"POST",
       headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify(payload)
+      body:JSON.stringify(Object.assign({token:auth.token},payload))
     });
     var data=await resp.json();
+    if(data&&data.auth===false){sessaoExpirou();return null}
     if(!data||!data.ok) throw new Error(data&&data.error?data.error:"Erro na nuvem");
     meta.lastSync=new Date().toISOString();
     saveMeta();
@@ -634,6 +666,7 @@ async function cloudPost(payload){
     updateBackupInfo();
     return data;
   }catch(e){
+    dirty=true;
     setCloudBadge("err","● Erro na nuvem (salvo local)");
     return null;
   }
@@ -647,16 +680,25 @@ async function syncFromCloud(silent){
   }
   setCloudBadge("syncing","↻ Sincronizando...");
   try{
-    var resp=await fetch(url+"?t="+Date.now(),{method:"GET"});
+    var resp=await fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"list",token:auth.token})});
     var data=await resp.json();
+    if(data&&data.auth===false){sessaoExpirou();return false}
     if(!data||!data.ok||!Array.isArray(data.registros)) throw new Error("Resposta inválida");
+    if(Array.isArray(data.excluidos)&&data.excluidos.length){
+      var mortos={};data.excluidos.forEach(function(i){mortos[i]=1});
+      var antes=db.registros.length;
+      db.registros=db.registros.filter(function(r){return !mortos[r.uid]});
+      if(db.registros.length!==antes)persist();
+    }
+    cloudMap={};
 
     var byUid={};
     db.registros.forEach(function(r){byUid[r.uid]=r});
 
     var mudancas=0;
     data.registros.forEach(function(cr){
-      if(!cr||!cr.id) return;
+      if(!okCloud(cr)) return;
+      cloudMap[cr.id]=cr.atualizadoEm||"";
       var local=byUid[cr.id];
       var a=getAluno(cr.nome||"Aluno", cr.ano?Number(cr.ano):null, cr.turma||"");
       var p=cr.professor?getProf(cr.professor):null;
@@ -733,11 +775,12 @@ async function initStorage(){
 
   $("cloudUrlInput").value=getCloudUrl();
   renderAll();
-  if(getCloudUrl()) syncFromCloud(true);
+  if(getCloudUrl()){ if(await syncFromCloud(true)) await pushDiff(); }
 }
 
 /* ===== Navegação por Abas ===== */
 function openTab(target){
+  if(target==="backup"&&auth.role!=="admin")return;
   document.querySelectorAll(".tab").forEach(function(b){
     var on=b.getAttribute("data-tab")===target;
     b.classList.toggle("active",on);
@@ -993,6 +1036,18 @@ function renderRows(){
       };
       tdB.appendChild(rest);
     }
+    if(auth.role==="admin"){
+      var del=el("button","Excluir","sm danger");del.type="button";
+      del.title="Exclui este registro permanentemente";
+      del.onclick=function(){excluirRegs([r],"Excluir PERMANENTEMENTE este registro de "+v.nome+" ("+br(r.data)+")? Não há como desfazer.")};
+      var dal=el("button","Excluir aluno","sm danger");dal.type="button";
+      dal.title="Exclui o aluno e todos os registros dele";
+      dal.onclick=function(){
+        var rs=db.registros.filter(function(x){return x.alunoId===r.alunoId});
+        excluirRegs(rs,"Excluir PERMANENTEMENTE o aluno "+v.nome+" e todos os seus "+rs.length+" registro(s)? Não há como desfazer.");
+      };
+      tdB.appendChild(del);tdB.appendChild(dal);
+    }
     tr.appendChild(tdB);
     tb.appendChild(tr);
   });
@@ -1137,7 +1192,7 @@ function downloadBlob(blob,filename){
   document.body.appendChild(a);a.click();
   setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url)},200);
 }
-function csvEsc(v){return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'}
+function csvEsc(v){var t=String(v==null?"":v);if(/^[=+\-@\t\r]/.test(t))t="'"+t;return '"'+t.replace(/"/g,'""')+'"'}
 function exportarCSV(list,filename){
   var head=["Data","Entrada","Saída","Duração (min)","Período","Nome do Aluno","Sala","Máquina","Professor","Status"];
   var lines=[head.map(csvEsc).join(";")];
@@ -1336,6 +1391,7 @@ $("importJsonBtn").onclick=function(){$("importJsonFile").click()};
 $("importJsonFile").onchange=function(ev){
   var file=ev.target.files&&ev.target.files[0];
   if(!file)return;
+  if(auth.role!=="admin"||file.size>5e6){setMsg("bmsg","Arquivo recusado (apenas administradores, até 5 MB).","err");ev.target.value="";return}
   var reader=new FileReader();
   reader.onload=function(){
     try{
@@ -1352,9 +1408,9 @@ $("importJsonFile").onchange=function(ev){
       incoming.registros.forEach(function(r){
         var aInc=incoming.alunos.find(function(x){return x.id===r.alunoId});
         var pInc=incoming.professores.find(function(x){return x.id===r.professorId});
-        var nomeA=aInc?aInc.nome:"Aluno";
+        var nomeA=String(aInc?aInc.nome:"Aluno").slice(0,80);
         var key=r.data+"|"+r.hora+"|"+norm(nomeA).toLowerCase()+"|"+r.maquina;
-        if(assinaturas[key]) return;
+        if(assinaturas[key]||!okCloud({id:"x00",data:r.data,hora:r.hora,maquina:r.maquina})) return;
         var a=getAluno(nomeA,aInc?aInc.ano:null,aInc?aInc.turma:"");
         var p=pInc?getProf(pInc.nome):null;
         var novoReg={
@@ -1390,7 +1446,89 @@ function renderAll(){
   updateBackupInfo();
 }
 
-initStorage();
+/* ===== Autenticação, sessão e exclusão ===== */
+function limpaLocal(){try{localStorage.removeItem(KEY);localStorage.removeItem(OLD)}catch(e){} idbSet(null)}
+function lockUI(msg,ok){
+  document.body.classList.add("locked");
+  $("lmsg").textContent=msg||"";$("lmsg").className="msg "+(ok?"ok":"err");
+  $("lp").value="";$("lurlw").hidden=!!getCloudUrl();
+  $("userChip").hidden=true;$("logoutBtn").hidden=true;
+}
+function encerra(msg,ok){
+  clearTimeout(idleT);
+  auth={token:"",user:"",role:"",nome:""};
+  try{sessionStorage.removeItem(SESS_KEY)}catch(e){}
+  if(!dirty)limpaLocal();
+  db=novo();editId=null;
+  renderAll();
+  lockUI(msg,ok);
+}
+function sessaoExpirou(){encerra("Sessão expirada. Entre novamente.")}
+async function sair(msg,ok){
+  if(auth.token&&getCloudUrl()){try{await cloudPost({action:"logout"})}catch(e){}}
+  encerra(msg,ok);
+}
+function resetIdle(){clearTimeout(idleT);if(auth.token)idleT=setTimeout(function(){sair("Sessão encerrada por inatividade.")},IDLE_MS)}
+["click","keydown","touchstart","mousemove"].forEach(function(n){document.addEventListener(n,resetIdle,{passive:true})});
+$("logoutBtn").onclick=function(){sair("Você saiu com segurança.",true)};
+
+async function abrirApp(){
+  document.body.classList.remove("locked");
+  $("userChip").textContent=auth.nome+(auth.role==="admin"?" · admin":"");
+  $("userChip").hidden=false;$("logoutBtn").hidden=false;
+  document.querySelector('[data-tab="backup"]').hidden=auth.role!=="admin";
+  openTab("presenca");
+  resetIdle();
+  await initStorage();
+}
+async function pushDiff(){
+  var l=db.registros.filter(function(r){var c=cloudMap[r.uid];return !c||(r.atualizadoEm||"")>c});
+  if(!l.length){dirty=false;return}
+  var res=await cloudPost({action:"bulkUpsert",records:l.map(toCloudRecord)});
+  if(res)dirty=false;
+}
+function excluirRegs(rs,txt){
+  confirmar(txt,async function(){
+    var ids=rs.map(function(r){return r.uid});
+    var res=await cloudPost({action:"delete",ids:ids});
+    if(!res){setMsg("msg","Não foi possível excluir na nuvem. Nada foi apagado.","err");return}
+    db.registros=db.registros.filter(function(r){return ids.indexOf(r.uid)<0});
+    db.alunos=db.alunos.filter(function(a){return db.registros.some(function(r){return r.alunoId===a.id})});
+    persist();renderAll();
+    setMsg("msg",res.excluidos+" registro(s) excluído(s) definitivamente.","ok");
+  });
+}
+
+$("lf").addEventListener("submit",async function(ev){
+  ev.preventDefault();
+  var u=norm($("lurl").value);
+  if(!getCloudUrl()&&u){
+    if(u.indexOf("https://script.google.com/macros/s/")!==0){lockUI("Link inválido.");return}
+    meta.cloudUrl=u;saveMeta();
+  }
+  if(!getCloudUrl()){lockUI("Informe o link do Web App.");return}
+  $("lbtn").disabled=true;
+  try{
+    var resp=await fetch(getCloudUrl(),{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({action:"login",user:norm($("lu").value),pass:$("lp").value})});
+    var d=await resp.json();
+    if(!d||!d.ok)throw new Error(d&&d.error?d.error:"Falha no login");
+    auth={token:d.token,user:d.user,role:d.role,nome:d.nome||d.user};
+    try{sessionStorage.setItem(SESS_KEY,JSON.stringify(auth))}catch(e){}
+    $("lp").value="";
+    await abrirApp();
+  }catch(e){
+    lockUI(e&&e.message&&e.message!=="Failed to fetch"?e.message:"Não foi possível conectar. Verifique a internet e o link.");
+  }
+  $("lbtn").disabled=false;
+});
+
+(function boot(){
+  var saved=null;
+  try{saved=JSON.parse(sessionStorage.getItem(SESS_KEY))}catch(e){}
+  if(saved&&saved.token&&getCloudUrl()){auth=saved;abrirApp()}
+  else lockUI("");
+})();
 })();
 </script>
 </body>
